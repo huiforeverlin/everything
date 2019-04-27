@@ -50,10 +50,18 @@
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
-            <version>1.4.196</version>
+            <version>1.4.197</version>
+        </dependency>
+
+        <!--数据库的连接池（提高数据库的访问效率）-->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.1.2</version>
         </dependency>
     </dependencies>
 
+    <!--配置构建的信息-->
     <build>
         <plugins>
             <!--编译插件-->
