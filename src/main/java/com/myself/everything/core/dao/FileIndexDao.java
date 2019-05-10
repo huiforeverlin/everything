@@ -6,10 +6,15 @@ import com.myself.everything.core.model.Thing;
 import java.util.List;
 
 
-//业务层访问数据库的CRUD
+//关于业务层访问数据库的CRUD（增删改查）
 public interface FileIndexDao {
-    //插入
+
+    //插入数据Thing
     void insert(Thing thing);
-    //查询
+
+    //根据condition条件进行数据库的检索、查询
     List<Thing> search(Condition condition);
+
+    //删除数据Thing
+    void delete(Thing thing);
 }

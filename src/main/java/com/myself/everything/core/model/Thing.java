@@ -16,5 +16,5 @@ public class Thing {
     private int depth;
 
     //文件类型
-    private FileType fileType;
+    private FileType fileType;//存的是枚举类型的变量
 }

@@ -7,9 +7,11 @@ import com.myself.everything.core.model.Thing;
 
 import java.io.File;
 
+
+//转换 + 写入
 public class FileIndexInterceptor implements FileInterceptor {
 
-    private final FileIndexDao fileIndexDao;
+    private final FileIndexDao fileIndexDao;//调用fileIndexDao的insert方法
 
     public FileIndexInterceptor(FileIndexDao fileIndexDao) {
         this.fileIndexDao = fileIndexDao;
@@ -17,8 +19,7 @@ public class FileIndexInterceptor implements FileInterceptor {
 
     @Override
     public void apply(File file) {
-        Thing thing=FileConvertThing.convert(file);
-        System.out.println("Thing -> "+thing);
+        Thing thing=FileConvertThing.convert(file);//转换：file -> thing
         fileIndexDao.insert(thing);
     }
 }

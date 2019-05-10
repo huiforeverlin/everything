@@ -1,6 +1,7 @@
 package com.myself.everything.core.dao;
 
 import com.alibaba.druid.pool.DruidDataSource;
+import com.myself.everything.config.EverythingConfig;
 
 import javax.sql.DataSource;
 import java.io.*;
@@ -28,11 +29,11 @@ public class DataSourceFactory {
                     //采用的是h2的嵌入式数据库，数据库以本地文件的方式存储，只需要提供url接口
                     //jdbc规范中关于MySQL：jdbc:mysql://ip:port/databaseName
                     //获取当前工程路径
-                    String workDir = System.getProperty("user.dir");
+//                    String workDir = System.getProperty("user.dir");
                     //JDBC规范中关于H2_jdbc:h2:filepath->存储到本地文件
                     //JDBC规范中关于H2 jdbc:h2:~/filepath->存储到当前用户的home目录
                     //JDBC规范中关于H2_jdbc:h2;//ip:port/datdabaseName->存储到服务器
-                    dataSource.setUrl("jdbc:h2:" + workDir + File.separator + "everything");
+                    dataSource.setUrl("jdbc:h2:" + EverythingConfig.getInstance().getH2IndexPath());
                 }
             }
         }
@@ -72,23 +73,10 @@ public class DataSourceFactory {
             connection.close();
             statement.close();
 
-        }catch (IOException e){
-
-        } catch (SQLException e) {
+        }catch (IOException | SQLException e){
             e.printStackTrace();
         }
 
 
     }
-
-//    public static void main(String[] args) {
-//        DataSource dataSource=DataSourceFactory.dataSource();
-//        System.out.println(dataSource);
-//        System.out.println(System.getProperty("user.dir"));
-//
-//    }
-
-//    public static void main(String[] args) {
-//        DataSourceFactory.initDatabase();
-//    }
 }

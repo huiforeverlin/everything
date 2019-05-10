@@ -4,10 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <!--描述信息，标识项目，坐标-->
     <groupId>com.myself</groupId>
     <artifactId>everything</artifactId>
     <version>1.0.0</version>
-    <!--打包格式jar-->
+    <!--打包格式jar [可选，默认是jar，还有war,pom等格式]-->
     <packaging>jar</packaging>
 
     <!--项目名称-->
@@ -29,17 +30,23 @@
         </developer>
     </developers>
 
-    <!--属性信息-->
+    <!--属性信息[可选，但是一般都会配置一些]-->
     <properties>
+        <!--配置编码-->
         <encoding>UTF-8</encoding>
+        <!--配置JDK版本-->
         <java.version>1.8</java.version>
+        <!--配置Maven内置属性[可选，但可以覆盖]-->
+        <!--编译级别-->
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <!--语法级别-->
         <maven.compiler.source>${java.version}</maven.compiler.source>
     </properties>
 
     <!--项目依赖-->
     <dependencies>
-        <!--Lombok插件运行依赖的库-->
+        <!--使用第三方的jar包，需要在https://search.maven.org这个网站上搜索并获取jar包的坐标-->
+        <!--Lombok插件运行依赖的库，可以简化编码-->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -63,6 +70,7 @@
 
     <!--配置构建的信息-->
     <build>
+        <!--插件也是由maven管理并且构建的一个程序，插件也有坐标，插件支撑maven工作-->
         <plugins>
             <!--编译插件-->
             <plugin>
@@ -71,7 +79,27 @@
                 <version>3.6.1</version>
             </plugin>
 
+            <!--依赖管理插件-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>3.1.1</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
             <!--打包插件-->
+            <!--jar包：用来生成jar文件-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
@@ -80,6 +108,8 @@
                     <archive>
                         <manifest>
                             <!--配置主类-->
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib</classpathPrefix>
                             <mainClass>com.myself.everything.cmd.EverythigCmdApp</mainClass>
                         </manifest>
                     </archive>

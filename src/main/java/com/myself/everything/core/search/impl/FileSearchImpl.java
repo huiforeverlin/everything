@@ -12,6 +12,7 @@ import java.util.List;
 
 
 //业务层
+//查询数据库，可调用
 public class FileSearchImpl implements FileSearch {
     private final FileIndexDao fileIndexDao;
     public FileSearchImpl(FileIndexDao fileIndexDao){
@@ -29,7 +30,9 @@ public class FileSearchImpl implements FileSearch {
     @Override
     public List<Thing> search(Condition condition) {
 
-
+        if(condition==null){
+            return new ArrayList<>();
+        }
         return this.fileIndexDao.search(condition);
     }
 }

@@ -20,46 +20,37 @@ public class FileScanImpl implements FileScan {
     //DAO
     private EverythingConfig config = EverythingConfig.getInstance();
 
-    private LinkedList<FileInterceptor> interceptors=new LinkedList<>();
+    private LinkedList<FileInterceptor> interceptors=new LinkedList<>();//多个处理器
 
     @Override
     public void index(String path) {
         File file = new File(path);
         //List<File> fileList = new ArrayList<>();
 
-        if (file.isFile()) {
-            if (config.getExcludePath().contains(file.getParent())) {//父目录在排除文件中
+        if (file.isFile()) {//是文件
+            if (config.getExcludePath().contains(file.getParent())) {//父目录包含在排除目录中，则直接返回，不再遍历
                 return;
             }
         } else {
-            if (!config.getExcludePath().contains(path)) {
-                File[] files = file.listFiles();
-                if (files != null) {
-                    for (File f : files) {
-                        index(f.getAbsolutePath());
-                    }
+            if (config.getExcludePath().contains(path)) {
+                return;
+            }
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    index(f.getAbsolutePath());//获取绝对路径
                 }
             }
         }
 
-        //File Directory
+        //File   遍历一个处理一个，
         for(FileInterceptor interceptor:this.interceptors){
             interceptor.apply(file);
         }
-
-//        //文件变成thing -> 写入
-//        for(File f:fileList){
-//            //File -> Thing -> Dao
-//
-//        }
-
     }
 
     @Override
     public void interceptor(FileInterceptor interceptor) {
         this.interceptors.add(interceptor);
     }
-
-
-
 }
