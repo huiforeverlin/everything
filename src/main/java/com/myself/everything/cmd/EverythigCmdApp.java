@@ -5,13 +5,20 @@ import com.myself.everything.core.EverythingManager;
 import com.myself.everything.core.model.Condition;
 import com.myself.everything.core.model.Thing;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
 public class EverythigCmdApp {
     private static Scanner scanner = new Scanner(System.in);
 
     public static void main(String[] args) {
+        //解析用户参数
+        parseParams(args);
+//        System.out.println(EverythingConfig.getInstance());
+
+
         //欢迎
         welcome();
 
@@ -23,6 +30,63 @@ public class EverythigCmdApp {
 
         //交互式
         interactive(manager);
+    }
+
+    private static void parseParams(String[] args) {
+        EverythingConfig config = EverythingConfig.getInstance();
+        for (String param : args) {
+            String maxReturnParam = "--maxReturnThingsRecord=";
+
+            if (param.startsWith(maxReturnParam)) {
+                //处理参数：如果用户输入的参数格式不对，使用默认值即可
+                //--maxReturnThingsRecord=value
+                int index = param.indexOf("=");
+
+                String maxReturnStr = param.substring(index + 1);
+                try {
+                    int maxReturn = Integer.parseInt(maxReturnStr);
+                    config.setMaxReturnThingsRecord(maxReturn);
+                } catch (NumberFormatException e) {
+                    //如果用户输入的参数格式不对，使用默认值即可
+                }
+
+            }
+
+            String deptOrderAscParam = "--deptOrderAsc=";
+            if (param.startsWith(deptOrderAscParam)) {
+                //--deptOrderAsc=value
+                int index = param.indexOf("=");
+                String deptOrderAsc = param.substring(index + 1);
+                config.setDeptOrderAsc(Boolean.parseBoolean(deptOrderAsc));
+            }
+
+            String includePathParam = "--includePath=";
+            if (param.startsWith(includePathParam)) {
+                //--includePath=value
+                int index = param.indexOf("=");
+                String includePath = param.substring(index + 1);
+
+                String[] includePaths = includePath.split(";");
+                if (includePaths.length > 0) {
+                    config.getIncludePath().clear();
+                }
+                for (String p : includePaths) {
+                    config.getIncludePath().add(p);
+                }
+            }
+
+            String excludePathParam = "--excludePath=";
+            if (param.startsWith(excludePathParam)) {
+                //--excludePath=value
+                int index = param.indexOf("=");
+                String excludePath = param.substring(index + 1);
+                    String[] excludePaths = excludePath.split(";");
+                    config.getExcludePath().clear();
+                    for (String p : excludePaths) {
+                        config.getExcludePath().add(p);
+                    }
+            }
+        }
     }
 
     private static void interactive(EverythingManager manager) {
@@ -73,6 +137,8 @@ public class EverythigCmdApp {
 //        System.out.println("检索功能");
         //统一调度器中的search
         //name fileType limit orderByAsc
+        condition.setLimit(EverythingConfig.getInstance().getMaxReturnThingsRecord());
+        condition.setOrderByAsc(EverythingConfig.getInstance().getDeptOrderAsc());
         List<Thing> thingList = manager.search(condition);
         for (Thing thing : thingList) {//输出到控制台
             System.out.println(thing.getPath());

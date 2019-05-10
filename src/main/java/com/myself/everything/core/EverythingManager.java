@@ -56,8 +56,7 @@ public class EverythingManager {
         //数据源对象
         DataSource dataSource = DataSourceFactory.dataSource();
 
-        //检查当前文件中是否包含数据库文件，如果没有就初始化数据库（everything.mv.db）
-        checkDatabase();
+        initOrResetDatabase();
 
         //业务层的对象
         FileIndexDao fileIndexDao = new FileIndexDaoImpl(dataSource);
@@ -73,18 +72,25 @@ public class EverythingManager {
 
     }
 
-    private void checkDatabase() {
-        String fileName = EverythingConfig.getInstance().getH2IndexPath() + ".mv.db";
-        File dbFile = new File(fileName);
-        if (dbFile.isFile() && !dbFile.exists()) {
-            DataSourceFactory.initDatabase();
-        }
+    //在第一次使用的时候要初始化数据库
+    //在重建索引的时候（先清理数据库里边的内容）也要初始化数据库
+    private void initOrResetDatabase() {
+        DataSourceFactory.initDatabase();
     }
+
+
+//    private void checkDatabase(){
+//        //因为一旦建立连接，该.mv.db文件必然会存在。但是该文件里边是否存在file_index表就不得而知了
+//        String fileName=EverythingConfig.getInstance().getH2IndexPath()+".mv.db";
+//        File file=new File(fileName);
+//        if(file.isFile()&&!file.exists()){
+//            DataSourceFactory.initDatabase();
+//        }
+//    }
 
 
     //检索
     public List<Thing> search(Condition condition) {
-        //TODO 扩展
         //Stream 流式处理 JDK8
         return this.fileSearch.search(condition).stream().filter(thing -> {
             String path = thing.getPath();
@@ -100,7 +106,7 @@ public class EverythingManager {
 
     //索引
     public void buildIndex() {
-//        initOrResetDatabase();
+        initOrResetDatabase(); //重置  如果存在file_inde表就删除file_index重建
         Set<String> directories = EverythingConfig.getInstance().getIncludePath();//C: D: E:
         //多线程处理 -> 线程池
         //用目录的数量作为线程池的线程数量
