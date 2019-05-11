@@ -19,14 +19,12 @@ import java.util.function.Consumer;
 public class EverythingConfig {
     private static volatile EverythingConfig config;
 
-
     //建立索引文件的路径（需要遍历扫描的路径）
     private Set<String> includePath = new HashSet<>();//路径不可能重复
 
     //排除索引文件的路径（不需要遍历扫描的路径）
     private Set<String> excludePath = new HashSet<>();
 
-    //todo 可配置的参数
     //检索的最大的返回值数量
     @Setter
     private Integer maxReturnThingsRecord = 30;

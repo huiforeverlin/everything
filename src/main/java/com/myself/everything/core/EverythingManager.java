@@ -1,6 +1,7 @@
 package com.myself.everything.core;
 
 import com.myself.everything.config.EverythingConfig;
+import com.myself.everything.core.common.HandlePath;
 import com.myself.everything.core.dao.DataSourceFactory;
 import com.myself.everything.core.dao.FileIndexDao;
 import com.myself.everything.core.dao.impl.FileIndexDaoImpl;
@@ -11,6 +12,8 @@ import com.myself.everything.core.interceptor.impl.FileIndexInterceptor;
 import com.myself.everything.core.interceptor.impl.ThingClearInterceptor;
 import com.myself.everything.core.model.Condition;
 import com.myself.everything.core.model.Thing;
+import com.myself.everything.core.monitor.FileWatch;
+import com.myself.everything.core.monitor.impl.FileWatchImpl;
 import com.myself.everything.core.search.FileSearch;
 import com.myself.everything.core.search.impl.FileSearchImpl;
 
@@ -21,6 +24,7 @@ import java.util.Set;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class EverythingManager {
@@ -31,8 +35,8 @@ public class EverythingManager {
 
     //清理删除的文件
     private ThingClearInterceptor thingClearInterceptor;
-    private Thread backgroundClearThread;
-    private AtomicBoolean backgroundClearThreadState = new AtomicBoolean(false);
+    private Thread backgroundClearThread;//清理线程
+    private AtomicBoolean backgroundClearThreadState = new AtomicBoolean(false);//标识变量，不能重复启动清理 线程
 
 
     private EverythingManager() {
@@ -51,6 +55,8 @@ public class EverythingManager {
         return manager;
     }
 
+    private FileWatch fileWatch;
+
     private void initComponent() {
 
         //数据源对象
@@ -67,8 +73,11 @@ public class EverythingManager {
 
         this.thingClearInterceptor = new ThingClearInterceptor(fileIndexDao);
         this.backgroundClearThread = new Thread(this.thingClearInterceptor);
-        this.backgroundClearThread.setDaemon(true);//将清理线程(用户线程)变成守护线程
-        this.backgroundClearThread.setName("Thread-Thing-Clear");
+        this.backgroundClearThread.setDaemon(true);//将清理线程(用户线程)变成守护线程，一直执行，直到用户线程全部运行完毕
+        this.backgroundClearThread.setName("Thread-Thing-Clear");//给清理线程设置名称
+
+        //文件监控对象
+        this.fileWatch=new FileWatchImpl(fileIndexDao);
 
     }
 
@@ -80,7 +89,7 @@ public class EverythingManager {
 
 
 //    private void checkDatabase(){
-//        //因为一旦建立连接，该.mv.db文件必然会存在。但是该文件里边是否存在file_index表就不得而知了
+//        //因为一旦建立连接，该.mv.db文件就必然会存在，所以初始化数据库的工作就不会进行。但是该文件里边是否存在file_index表就不得而知了
 //        String fileName=EverythingConfig.getInstance().getH2IndexPath()+".mv.db";
 //        File file=new File(fileName);
 //        if(file.isFile()&&!file.exists()){
@@ -92,16 +101,29 @@ public class EverythingManager {
     //检索
     public List<Thing> search(Condition condition) {
         //Stream 流式处理 JDK8
-        return this.fileSearch.search(condition).stream().filter(thing -> {
-            String path = thing.getPath();
-            File f = new File(path);
-            boolean flag = f.exists();
-            if (!flag) {
-                //做删除
-                thingClearInterceptor.apply(thing);
+        return this.fileSearch.search(condition).stream().filter(new Predicate<Thing>() {
+            @Override
+            public boolean test(Thing thing) {
+                String path = thing.getPath();
+                File f = new File(path);
+                boolean flag = f.exists();
+                if (!flag) {//文件不存在就删除
+                    //做删除，异步操作 （生产者消费者模型，将要删除的Thing放在队列中让消费者处理）
+                    thingClearInterceptor.apply(thing);
+                }
+                return flag;
             }
-            return flag;
         }).collect(Collectors.toList());
+//        return this.fileSearch.search(condition).stream().filter(thing -> {//filter：过滤器   断言
+//            String path = thing.getPath();
+//            File f = new File(path);
+//            boolean flag = f.exists();
+//            if (!flag) {//文件不存在就删除
+//                //做删除，异步操作 （生产者消费者模型，将要删除的Thing放在队列中让消费者处理）
+//                thingClearInterceptor.apply(thing);
+//            }
+//            return flag;
+//        }).collect(Collectors.toList());//将stream流变成List集合
     }
 
     //索引
@@ -150,6 +172,22 @@ public class EverythingManager {
         } else {
             System.out.println("can not start backgroundClearThead repeatly");
         }
+    }
+
+    //启动文件系统监听
+    public void startFileSystemMonitor(){
+        EverythingConfig config=EverythingConfig.getInstance();
+        HandlePath handlePath=new HandlePath();
+        handlePath.setIncludePath(config.getIncludePath());
+        handlePath.setExcludePath(config.getExcludePath());
+        this.fileWatch.monitor(handlePath);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                System.out.println("文件系统监控启动");
+                fileWatch.start();
+            }
+        }).start();
     }
 
 }

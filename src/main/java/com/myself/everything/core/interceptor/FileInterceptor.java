@@ -6,5 +6,6 @@ import java.io.File;
 
 @FunctionalInterface   //函数接口
 public interface FileInterceptor {
+    int count=0;
     void apply(File file);
 }

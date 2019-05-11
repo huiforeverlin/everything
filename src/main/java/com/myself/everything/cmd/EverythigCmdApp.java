@@ -18,7 +18,6 @@ public class EverythigCmdApp {
         parseParams(args);
 //        System.out.println(EverythingConfig.getInstance());
 
-
         //欢迎
         welcome();
 
@@ -28,6 +27,9 @@ public class EverythigCmdApp {
         //启动后台清理线程
         manager.startBackgroundClearThread();
 
+        //启动监控
+        manager.startFileSystemMonitor();
+
         //交互式
         interactive(manager);
     }
@@ -35,8 +37,8 @@ public class EverythigCmdApp {
     private static void parseParams(String[] args) {
         EverythingConfig config = EverythingConfig.getInstance();
         for (String param : args) {
+            //参考Linux下的命令，如ls -l ，这里采用--表示
             String maxReturnParam = "--maxReturnThingsRecord=";
-
             if (param.startsWith(maxReturnParam)) {
                 //处理参数：如果用户输入的参数格式不对，使用默认值即可
                 //--maxReturnThingsRecord=value
@@ -137,6 +139,7 @@ public class EverythigCmdApp {
 //        System.out.println("检索功能");
         //统一调度器中的search
         //name fileType limit orderByAsc
+        //在搜索前设置搜索条件
         condition.setLimit(EverythingConfig.getInstance().getMaxReturnThingsRecord());
         condition.setOrderByAsc(EverythingConfig.getInstance().getDeptOrderAsc());
         List<Thing> thingList = manager.search(condition);

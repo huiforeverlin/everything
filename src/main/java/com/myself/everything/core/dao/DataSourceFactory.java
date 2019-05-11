@@ -2,12 +2,14 @@ package com.myself.everything.core.dao;
 
 import com.alibaba.druid.pool.DruidDataSource;
 import com.myself.everything.config.EverythingConfig;
+import org.apache.commons.io.IOUtils;
 
 import javax.sql.DataSource;
 import java.io.*;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.util.function.Predicate;
 
 public class DataSourceFactory {
     //数据源（单例）
@@ -49,40 +51,57 @@ public class DataSourceFactory {
     //初始化数据库
     public static void initDatabase() {
         //1.获取数据源
-        DataSource dataSource=DataSourceFactory.dataSource();
+        DataSource dataSource = DataSourceFactory.dataSource();
         //2.获取SQL语句
         //不采取读取文件绝对路径的方式
         //采取读取classpath路径下文件的方式
-        try(InputStream in = DataSourceFactory.class.getClassLoader().getResourceAsStream("everything.sql");) {
+        try (InputStream in = DataSourceFactory.class.getClassLoader().getResourceAsStream("everything.sql");) {
 
-            if(in==null){
+            if (in == null) {
                 throw new RuntimeException("Not read init database script ,please check it");
             }
-            StringBuilder sqlBuilder=new StringBuilder();
-            try(BufferedReader reader=new BufferedReader(new InputStreamReader(in));) {
+            StringBuilder sqlBuilder = new StringBuilder();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(in));) {
                 String line;
-                while ((line=reader.readLine())!=null){
-                    if(!line.startsWith("--")){
+                while ((line = reader.readLine()) != null) {
+                    if (!line.startsWith("--")) {
                         sqlBuilder.append(line);
                     }
                 }
             }
             //3.通过数据库连接和名称执行SQL
-            String sql=sqlBuilder.toString();
+            String sql = sqlBuilder.toString();
             //JDBC
             //3.1 获取数据库连接
-            Connection connection=dataSource.getConnection();
+            Connection connection = dataSource.getConnection();
             //3.2 创建命令
-            PreparedStatement statement=connection.prepareStatement(sql);
+            PreparedStatement statement = connection.prepareStatement(sql);
             //3.3 执行SQL语句
             statement.execute();//到这儿file_index表就创建好了
             connection.close();
             statement.close();
 
-        }catch (IOException | SQLException e){
+        } catch (IOException | SQLException e) {
             e.printStackTrace();
         }
 
-
     }
+
+//    public static void main(String[] args) {
+//        try (InputStream in = DataSourceFactory.class.getClassLoader().getResourceAsStream("everything.sql")) {
+//            String sql= IOUtils.toString(in);
+//            System.out.println(sql);
+//            IOUtils.readLines(in)
+//                    .stream()
+//                    .filter(new Predicate<String>() {
+//                        @Override
+//                        public boolean test(String line) {
+//                            return !line.startsWith("--");
+//                        }
+//                    })
+//                    .forEach(line -> System.out.println(line));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
 }
